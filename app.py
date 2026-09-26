@@ -53,11 +53,64 @@ section[data-testid="stSidebar"] .stTextInput > div > div {
 }
 .stTextArea textarea:focus { border-color: #1a1a2e; }
 
-.result-wrap {
-    background: #ffffff; border: 1px solid #e8e8e8;
-    border-radius: 14px; padding: 2rem 2.5rem; margin-top: 1rem;
-    box-shadow: 0 2px 20px rgba(0,0,0,0.06);
-    line-height: 1.9; font-size: 0.97rem;
+# ✅ নতুন — result-wrap সরিয়ে এটা দিন
+/* markdown content styling */
+.stMarkdown {
+    line-height: 1.9;
+    font-size: 0.97rem;
+}
+.stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {
+    margin-top: 1.5rem;
+    padding-bottom: 0.3rem;
+    border-bottom: 2px solid #e8e8e8;
+}
+.stMarkdown table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    margin: 1rem 0;
+}
+.stMarkdown th {
+    background: #1a1a2e;
+    color: white;
+    padding: 10px 14px;
+    text-align: left;
+}
+.stMarkdown td {
+    padding: 9px 14px;
+    border-bottom: 1px solid #f0f0f0;
+}
+.stMarkdown tr:hover td {
+    background: #f8f9ff;
+}
+.stMarkdown blockquote {
+    border-left: 4px solid #1a1a2e;
+    padding: 8px 16px;
+    background: #f8f9ff;
+    border-radius: 0 8px 8px 0;
+    margin: 1rem 0;
+    color: #1a1a2e;
+}
+.stMarkdown code {
+    background: #f1f5f9 !important;
+    color: #1a1a2e !important;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.88rem;
+}
+.stMarkdown pre {
+    background: #f8faff !important;
+    color: #1a1a2e !important;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    border: 1.5px solid #e0e7ff;
+}
+.stMarkdown pre code {
+    background: transparent !important;
+    color: #1a1a2e !important;
+    font-size: 0.88rem;
+    line-height: 1.7;
 }
 
 .tab-status-done {
