@@ -1,7 +1,9 @@
 import streamlit as st
 import google.generativeai as genai
 from datetime import datetime
-import threading
+import requests
+from bs4 import BeautifulSoup
+import re
 
 st.set_page_config(
     page_title="The Analyst",
@@ -19,10 +21,19 @@ st.markdown("""
 h1, h2, h3 { font-family: 'Playfair Display', serif; color: #1a1a2e; }
 
 section[data-testid="stSidebar"] { background: #1a1a2e; }
-section[data-testid="stSidebar"] * { color: white !important; }
-section[data-testid="stSidebar"] .stSelectbox > div > div,
-section[data-testid="stSidebar"] .stTextInput > div > div {
-    background: #16213e; border: 1px solid #0f3460;
+section[data-testid="stSidebar"] > div { color: white; }
+section[data-testid="stSidebar"] label { color: white !important; }
+section[data-testid="stSidebar"] p { color: white !important; }
+section[data-testid="stSidebar"] span { color: white !important; }
+section[data-testid="stSidebar"] .stSelectbox > div > div {
+    background: #16213e !important;
+    border: 1px solid #0f3460 !important;
+    color: white !important;
+}
+section[data-testid="stSidebar"] .stTextInput > div > div > input {
+    background: #16213e !important;
+    border: 1px solid #0f3460 !important;
+    color: white !important;
 }
 
 .stTabs [data-baseweb="tab-list"] {
@@ -47,97 +58,113 @@ section[data-testid="stSidebar"] .stTextInput > div > div {
     box-shadow: 0 4px 12px rgba(26,26,46,0.3);
 }
 
-.stTextArea textarea {
-    border: 1.5px solid #e0e0e0; border-radius: 10px;
-    font-size: 0.95rem; line-height: 1.6;
+div[data-baseweb="textarea"] textarea {
+    color: #1a1a2e !important;
+    background-color: #ffffff !important;
+    -webkit-text-fill-color: #1a1a2e !important;
+    border: 1.5px solid #e0e0e0 !important;
+    border-radius: 10px !important;
+    font-size: 0.95rem !important;
+    line-height: 1.6 !important;
+    caret-color: #1a1a2e !important;
 }
-.stTextArea textarea:focus { border-color: #1a1a2e; }
+div[data-baseweb="textarea"] textarea:focus {
+    border-color: #1a1a2e !important;
+}
+div[data-baseweb="textarea"] textarea::placeholder {
+    color: #9ca3af !important;
+    -webkit-text-fill-color: #9ca3af !important;
+}
 
-# ✅ নতুন — result-wrap সরিয়ে এটা দিন
-/* markdown content styling */
-.stMarkdown {
-    line-height: 1.9;
-    font-size: 0.97rem;
+div[data-baseweb="input"] input {
+    color: #1a1a2e !important;
+    background-color: #ffffff !important;
+    -webkit-text-fill-color: #1a1a2e !important;
+    border: 1.5px solid #e0e0e0 !important;
+    border-radius: 8px !important;
+    caret-color: #1a1a2e !important;
 }
+div[data-baseweb="input"] input:focus {
+    border-color: #1a1a2e !important;
+}
+div[data-baseweb="input"] input::placeholder {
+    color: #9ca3af !important;
+    -webkit-text-fill-color: #9ca3af !important;
+}
+
+.stMarkdown { line-height: 1.9; font-size: 0.97rem; color: #1a1a2e; }
 .stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {
     margin-top: 1.5rem;
     padding-bottom: 0.3rem;
     border-bottom: 2px solid #e8e8e8;
+    color: #1a1a2e !important;
 }
 .stMarkdown table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.9rem;
-    margin: 1rem 0;
+    width: 100%; border-collapse: collapse;
+    font-size: 0.9rem; margin: 1rem 0;
 }
 .stMarkdown th {
-    background: #1a1a2e;
-    color: white;
-    padding: 10px 14px;
-    text-align: left;
+    background: #1a1a2e; color: white !important;
+    padding: 10px 14px; text-align: left;
 }
 .stMarkdown td {
-    padding: 9px 14px;
-    border-bottom: 1px solid #f0f0f0;
+    padding: 9px 14px; border-bottom: 1px solid #f0f0f0;
+    color: #1a1a2e !important;
 }
-.stMarkdown tr:hover td {
-    background: #f8f9ff;
-}
+.stMarkdown tr:hover td { background: #f8f9ff; }
 .stMarkdown blockquote {
-    border-left: 4px solid #1a1a2e;
-    padding: 8px 16px;
-    background: #f8f9ff;
-    border-radius: 0 8px 8px 0;
-    margin: 1rem 0;
-    color: #1a1a2e;
+    border-left: 4px solid #1a1a2e; padding: 8px 16px;
+    background: #f8f9ff; border-radius: 0 8px 8px 0;
+    margin: 1rem 0; color: #1a1a2e !important;
 }
 .stMarkdown code {
     background: #f1f5f9 !important;
     color: #1a1a2e !important;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 0.88rem;
+    -webkit-text-fill-color: #1a1a2e !important;
+    padding: 2px 6px; border-radius: 4px; font-size: 0.88rem;
 }
 .stMarkdown pre {
     background: #f8faff !important;
     color: #1a1a2e !important;
-    padding: 1rem 1.5rem;
-    border-radius: 8px;
-    overflow-x: auto;
-    border: 1.5px solid #e0e7ff;
+    padding: 1rem 1.5rem; border-radius: 8px;
+    overflow-x: auto; border: 1.5px solid #e0e7ff;
 }
 .stMarkdown pre code {
     background: transparent !important;
     color: #1a1a2e !important;
-    font-size: 0.88rem;
-    line-height: 1.7;
+    -webkit-text-fill-color: #1a1a2e !important;
+    font-size: 0.88rem; line-height: 1.7; padding: 0;
 }
 
-.tab-status-done {
-    display: inline-block; background: #d1fae5;
-    color: #065f46; padding: 2px 10px; border-radius: 20px;
-    font-size: 0.78rem; font-weight: 600; margin-left: 8px;
-}
-.tab-status-loading {
-    display: inline-block; background: #fef3c7;
-    color: #92400e; padding: 2px 10px; border-radius: 20px;
-    font-size: 0.78rem; font-weight: 600; margin-left: 8px;
-}
-.tab-status-wait {
-    display: inline-block; background: #f1f5f9;
-    color: #64748b; padding: 2px 10px; border-radius: 20px;
-    font-size: 0.78rem; font-weight: 600; margin-left: 8px;
-}
-
-.progress-card {
+.article-preview {
     background: #f8faff; border: 1px solid #e0e7ff;
+    border-radius: 12px; padding: 1.5rem 2rem;
+    margin: 1rem 0; max-height: 400px; overflow-y: auto;
+    line-height: 1.8; font-size: 0.95rem; color: #1a1a2e;
+}
+.source-badge {
+    display: inline-block; background: #1a1a2e; color: white;
+    padding: 3px 12px; border-radius: 20px;
+    font-size: 0.78rem; font-weight: 600; margin-bottom: 0.8rem;
+}
+.progress-card {
+    background: #f0fdf4; border: 1px solid #bbf7d0;
     border-radius: 12px; padding: 1.2rem 1.5rem; margin: 1rem 0;
 }
-
 .strip-blue {
     background: #eff6ff; border-left: 4px solid #2563eb;
     padding: 10px 16px; border-radius: 6px;
     margin-bottom: 1rem; font-size: 0.9rem; color: #1e3a8a;
+}
+.strip-green {
+    background: #f0fdf4; border-left: 4px solid #16a34a;
+    padding: 10px 16px; border-radius: 6px;
+    margin-bottom: 1rem; font-size: 0.9rem; color: #14532d;
+}
+.strip-amber {
+    background: #fffbeb; border-left: 4px solid #f59e0b;
+    padding: 10px 16px; border-radius: 6px;
+    margin-bottom: 1rem; font-size: 0.9rem; color: #78350f;
 }
 
 div[data-testid="metric-container"] {
@@ -151,11 +178,6 @@ div[data-testid="metric-container"] div { color: white !important; }
     color: #1a1a2e; border-radius: 8px; font-weight: 600;
 }
 .stDownloadButton > button:hover { background: #1a1a2e; color: white; }
-
-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin: 1rem 0; }
-th { background: #1a1a2e; color: white; padding: 10px 14px; text-align: left; }
-td { padding: 9px 14px; border-bottom: 1px solid #f0f0f0; }
-tr:hover td { background: #f8f9ff; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -173,15 +195,8 @@ st.markdown("""
 #  SESSION STATE
 # ══════════════════════════════════════════
 SECTIONS = [
-    "sentences",
-    "vocabulary",
-    "context",
-    "grammar",
-    "collocations",
-    "formulas",
-    "exam",
-    "mistakes",
-    "revision",
+    "sentences", "vocabulary", "context", "grammar",
+    "collocations", "formulas", "exam", "mistakes", "revision",
 ]
 
 SECTION_LABELS = {
@@ -201,10 +216,11 @@ for k, v in {
     "notes": [],
     "total": 0,
     "cache": {},
-    "results": {},        # section → result text
-    "current_text": "",   # the article being analyzed
+    "results": {},
+    "current_text": "",
+    "fetched_title": "",
+    "fetched_source": "",
     "analysis_done": False,
-    "generating": False,
 }.items():
     if k not in st.session_state:
         st.session_state[k] = v
@@ -216,13 +232,14 @@ with st.sidebar:
     st.markdown("## ⚙️ Control Panel")
     st.divider()
 
-    api_key = st.text_input("🔑 API Key", type="password", placeholder="Gemini API key...")
+    api_key = st.text_input("🔑 API Key", type="password",
+                            placeholder="Gemini API key...")
 
     model_choice = st.selectbox("🤖 Model", [
         "gemini-3.5-flash-lite",
-        "gemini-2.0-flash",
-        "gemini-1.5-flash-8b",
-        "gemini-1.5-flash",
+        "gemini-3.8-flash",
+        "gemini-3.6-flash",
+        "gemini-3.1-flash-lite",
         "gemini-1.5-pro",
     ], index=0)
 
@@ -233,19 +250,13 @@ with st.sidebar:
     )
 
     pub_style = st.selectbox("🎯 Style", [
-        "The Economist",
-        "New York Times",
-        "The Guardian",
-        "BBC News",
-        "Academic / IELTS",
-        "Legal / Constitutional",
+        "The Economist", "New York Times", "The Guardian",
+        "BBC News", "Academic / IELTS", "Legal / Constitutional",
     ])
 
     analysis_type = st.selectbox("📋 Mode", [
-        "General (News / Editorial)",
-        "Law / Constitutional",
-        "Economics / Business",
-        "Political Science",
+        "General (News / Editorial)", "Law / Constitutional",
+        "Economics / Business", "Political Science",
         "Science / Environment",
     ])
 
@@ -259,12 +270,206 @@ with st.sidebar:
         st.session_state.results = {}
         st.session_state.analysis_done = False
         st.session_state.current_text = ""
+        st.session_state.fetched_title = ""
+        st.session_state.fetched_source = ""
         st.success("Cleared!")
         st.rerun()
 
 
 # ══════════════════════════════════════════
-#  HELPERS
+#  WEB SCRAPER — 3 LAYER SYSTEM
+# ══════════════════════════════════════════
+def extract_article_from_url(url: str):
+    from urllib.parse import urlparse
+
+    def try_direct(url):
+        headers = {
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/120.0.0.0 Safari/537.36"
+            ),
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
+        }
+        try:
+            resp = requests.get(url, headers=headers, timeout=15)
+            resp.raise_for_status()
+            soup = BeautifulSoup(resp.text, "html.parser")
+
+            title = ""
+            if soup.find("h1"):
+                title = soup.find("h1").get_text(strip=True)
+            elif soup.title:
+                title = soup.title.get_text(strip=True)
+
+            source = urlparse(url).netloc.replace("www.", "")
+
+            for tag in soup([
+                "script", "style", "nav", "header", "footer",
+                "aside", "iframe", "noscript", "form", "button",
+                "figure", "figcaption", "picture"
+            ]):
+                tag.decompose()
+
+            article_text = ""
+            selectors = [
+                "article", "[class*='article-body']",
+                "[class*='story-body']", "[class*='post-content']",
+                "[class*='entry-content']", "[class*='article-content']",
+                "[class*='content-body']", "[class*='news-body']",
+                "[class*='main-content']", "main", "[role='main']",
+            ]
+
+            for selector in selectors:
+                container = soup.select_one(selector)
+                if container:
+                    paragraphs = container.find_all("p")
+                    text = " ".join(
+                        p.get_text(strip=True) for p in paragraphs
+                        if len(p.get_text(strip=True)) > 40
+                    )
+                    if len(text) > 300:
+                        article_text = text
+                        break
+
+            if len(article_text) < 300:
+                all_p = soup.find_all("p")
+                article_text = " ".join(
+                    p.get_text(strip=True) for p in all_p
+                    if len(p.get_text(strip=True)) > 50
+                )
+
+            article_text = re.sub(r'\s+', ' ', article_text).strip()
+
+            if len(article_text) > 300:
+                words = article_text.split()
+                if len(words) > 4000:
+                    article_text = " ".join(words[:4000]) + "..."
+                return title, source, article_text, None
+
+        except Exception:
+            pass
+        return None, None, None, "layer1_failed"
+
+    def try_jina(url):
+        try:
+            jina_url = f"https://r.jina.ai/{url}"
+            headers = {
+                "Accept": "text/plain",
+                "User-Agent": "Mozilla/5.0",
+                "X-Return-Format": "text",
+            }
+            resp = requests.get(jina_url, headers=headers, timeout=20)
+
+            if resp.status_code == 200 and len(resp.text) > 200:
+                raw = resp.text
+
+                title = ""
+                title_match = re.search(r'^Title:\s*(.+)$', raw, re.MULTILINE)
+                if title_match:
+                    title = title_match.group(1).strip()
+
+                lines = raw.split('\n')
+                content_lines = []
+                skip_patterns = [
+                    'Title:', 'URL Source:', 'Published Time:',
+                    'Warning:', 'Image ', '================',
+                    'Links/Buttons:', '* [', '![',
+                ]
+                for line in lines:
+                    if any(line.strip().startswith(p) for p in skip_patterns):
+                        continue
+                    if line.strip():
+                        content_lines.append(line.strip())
+
+                article_text = " ".join(content_lines)
+                article_text = re.sub(r'\s+', ' ', article_text).strip()
+                article_text = re.sub(r'\[.*?\]\(.*?\)', '', article_text)
+
+                source = urlparse(url).netloc.replace("www.", "")
+
+                if len(article_text) > 300:
+                    words = article_text.split()
+                    if len(words) > 4000:
+                        article_text = " ".join(words[:4000]) + "..."
+                    return title, source, article_text, None
+
+        except Exception:
+            pass
+        return None, None, None, "layer2_failed"
+
+    def try_gemini_url(url):
+        if not api_key:
+            return None, None, None, "no_api_key"
+        try:
+            source = urlparse(url).netloc.replace("www.", "")
+            genai.configure(api_key=api_key.strip())
+            model = genai.GenerativeModel("gemini-1.5-flash")
+            prompt = f"""
+Visit this URL and extract the main article text:
+URL: {url}
+
+Return ONLY in this format:
+TITLE: [article title]
+SOURCE: [website name]
+TEXT: [full article text, clean, no ads, no navigation]
+
+If you cannot access the URL, say: CANNOT_ACCESS
+"""
+            resp = model.generate_content(prompt)
+            raw = resp.text.strip()
+
+            if "CANNOT_ACCESS" in raw:
+                return None, None, None, "gemini_cannot_access"
+
+            title = ""
+            title_match = re.search(r'TITLE:\s*(.+)', raw)
+            if title_match:
+                title = title_match.group(1).strip()
+
+            article_text = ""
+            text_match = re.search(r'TEXT:\s*(.+)', raw, re.DOTALL)
+            if text_match:
+                article_text = text_match.group(1).strip()
+
+            if len(article_text) > 200:
+                words = article_text.split()
+                if len(words) > 4000:
+                    article_text = " ".join(words[:4000]) + "..."
+                return title, source, article_text, None
+
+        except Exception:
+            pass
+        return None, None, None, "layer3_failed"
+
+    source = urlparse(url).netloc.replace("www.", "")
+
+    title, src, text, err = try_direct(url)
+    if text:
+        return title, src, text, None
+
+    title, src, text, err = try_jina(url)
+    if text:
+        return title or "", src or source, text, None
+
+    title, src, text, err = try_gemini_url(url)
+    if text:
+        return title or "", src or source, text, None
+
+    return "", source, "", (
+        "⚠️ এই সাইটটি automatically fetch করা গেলো না।\n\n"
+        "**কারণ:**\n"
+        "- Paywall (subscription required)\n"
+        "- JavaScript-heavy site\n"
+        "- Bot protection (Cloudflare)\n\n"
+        "**সমাধান:** Article manually copy করুন → "
+        "Paste Text mode ব্যবহার করুন।"
+    )
+
+
+# ══════════════════════════════════════════
+#  AI HELPERS
 # ══════════════════════════════════════════
 def build_system_header():
     law_note = ""
@@ -317,17 +522,17 @@ def show_result(result, filename_prefix="result"):
         if result.startswith("❌"):
             st.error(result)
         else:
-            st.markdown(result)  # ← সরাসরি markdown
+            st.markdown(result)
             st.download_button(
                 "📥 Download",
                 result,
                 f"{filename_prefix}_{datetime.now().strftime('%Y%m%d_%H%M')}.md",
             )
 
+
 # ══════════════════════════════════════════
 #  SECTION PROMPTS
 # ══════════════════════════════════════════
-
 def prompt_sentences(text):
     return f"""
 {build_system_header()}
@@ -342,20 +547,17 @@ For EVERY sentence in the text:
 
 | | |
 |---|---|
-| বাংলা অনুবাদ | [natural Bengali — precise, not word-for-word] |
-| Clause Type | [Simple / Compound / Complex / Compound-Complex] |
-| Clause Breakdown | [label each — Main, Subordinate, Relative, Noun, Adverbial] |
-| Grammar Device | [Parallelism / Inversion / Fronting / Passive / Cleft / Ellipsis] |
-| কেন এই গঠন? | [Bengali — why this structure serves the argument] |
-| Why It Works | [English — journalistic/academic reason] |
-| BCS / Exam Link | [if this grammar pattern has appeared in exams] |
+| বাংলা অনুবাদ | [natural Bengali] |
+| Clause Type | [Simple/Compound/Complex/Compound-Complex] |
+| Clause Breakdown | [label each clause] |
+| Grammar Device | [Parallelism/Inversion/Fronting/Passive/Cleft/Ellipsis] |
+| কেন এই গঠন? | [Bengali explanation] |
+| Why It Works | [English explanation] |
+| BCS / Exam Link | [if applicable] |
 
 ---
 
-(repeat for every sentence)
-
-## Sentence Transformation Exercises
-Five BCS/Bank style transforms from sentences in this text:
+## Transformation Exercises (BCS/Bank)
 1. [Voice change] → ✅
 2. [Degree change] → ✅
 3. [Conditional] → ✅
@@ -374,19 +576,18 @@ TEXT: \"\"\"{text}\"\"\"
 ## Quick Reference
 | # | Word | বাংলা অর্থ | Definition | POS | Root | Frequency |
 |---|---|---|---|---|---|---|
-[All important words — minimum 12]
 
 ---
 
-## Deep-Dive (every word)
+## Deep-Dive (every important word — minimum 12)
 
 #### 🔤 [WORD]
-**[Bengali meaning] · [Concise English definition]**
+**[Bengali meaning] · [English definition]**
 
 | | |
 |---|---|
 | 🌱 Root | [root] → [language] → "[meaning]" |
-| 📖 Etymology | [Brief, interesting origin story — 2 sentences] |
+| 📖 Etymology | [interesting origin — 2 sentences] |
 | ⚡ Frequency | 🔴 HIGH / 🟡 MEDIUM / 🟢 LOW |
 
 **Word Family:**
@@ -403,18 +604,13 @@ TEXT: \"\"\"{text}\"\"\"
 
 **Antonyms:** [A1] ([Bengali]) · [A2] ([Bengali])
 
-**🧠 Memory Hook (Bengali mnemonic):**
-[Clever, unforgettable Bengali trick]
+**🧠 Memory Hook:** [Bengali mnemonic]
 
-**📰 {pub_style} Sentence:**
-> [Professional example]
+**📰 {pub_style} Sentence:** > [Professional example]
 
 **🏆 Exam Record:**
 | Exam | Year | Question | Answer |
 |---|---|---|---|
-
----
-(repeat for every word)
 """
 
 
@@ -426,43 +622,38 @@ TEXT: \"\"\"{text}\"\"\"
 # 🌍 CONTEXT & HISTORICAL INTELLIGENCE
 
 ## What This Is Really About
-**EN:** [2-3 sentences — the real issue beneath the surface]
-**বাংলা:** [same in Bengali]
+**EN:** [2-3 sentences]
+**বাংলা:** [Bengali]
 
 ## The Immediate Context
-[What happened / what crisis / what debate — narrative explanation]
+[Narrative explanation — not bullet points]
 বাংলা: [Bengali paragraph]
 
 ## Historical Timeline
 | Year | Event | Where | Why It Matters |
 |---|---|---|---|
-[5-6 real, specific events directly related to THIS text's topic]
 
 ## Famous & Notorious Related Events
-*(Tell the story — not just a bullet point)*
 
-**[Event Name]** ([Year], [Place])
-[4-5 sentences — what happened, why it was controversial/landmark, what changed because of it]
-বাংলা: [Bengali version]
+### [Event Name] ([Year], [Place])
+[4-5 sentences — what happened, why controversial, what changed]
+**বাংলা:** [Bengali]
 
-**[Event 2]**
-[Same treatment]
+### [Event 2]
+[Same]
 
-**[Event 3]**
-[Same treatment]
+### [Event 3]
+[Same]
 
 ## 🇧🇩 Bangladesh Dimension
-[Specific facts, laws, dates, figures, economic data]
-বাংলা: [Bengali]
+[Specific facts, laws, dates, figures]
+**বাংলা:** [Bengali]
 
-{"## ⚖️ Constitutional & Legal Map" if "Law" in analysis_type or "Constitutional" in analysis_type else ""}
-{"**Bangladesh Constitution articles / amendments relevant here:**" if "Law" in analysis_type else ""}
-{"[Specific articles + what they say + how they connect to this text]" if "Law" in analysis_type else ""}
-{"**Landmark Cases:**" if "Law" in analysis_type else ""}
-{"[Real cases — Bangladesh High Court / Supreme Court / international — with brief facts and rulings]" if "Law" in analysis_type else ""}
+{"## ⚖️ Constitutional & Legal Map" if "Law" in analysis_type else ""}
+{"[Relevant BD Constitution articles + landmark cases]" if "Law" in analysis_type else ""}
 
 ## 📆 On This Day ({datetime.now().strftime('%B %d')})
-[Notable event on today's date related to this topic — if exists]
+[Related historical event today]
 """
 
 
@@ -473,50 +664,31 @@ TEXT: \"\"\"{text}\"\"\"
 
 # 🏛️ GRAMMAR LABORATORY
 
-## Advanced Syntax Devices Found
+## Advanced Syntax Devices
 | Device | Example from Text | কেন কার্যকর (Bengali) | Why Effective (English) | BCS Use |
 |---|---|---|---|---|
 
-## Clause Architecture Map
-For each complex/compound sentence, diagram the clause structure:
+## Clause Architecture
+For each complex sentence:
 
 **"[sentence]"**
-```
 Main Clause: [...]
-  └─ Subordinate Clause ([type]): [...]
-       └─ Relative Clause: [...]
-```
-বাংলা ব্যাখ্যা: [why this layering works]
+└─ Subordinate ([type]): [...]
 
-## Special Grammar Points in This Text
-[5-6 notable grammar features — passive constructions, subjunctive, ellipsis, etc.]
-[Each with: Bengali explanation + English rule + BCS exam connection]
+text
 
-## Grammar Rules That Appear in BCS/Bank
-| Rule Found in Text | BCS/Bank Frequency | Sample Past Question | Answer |
+বাংলা: [why this layering works]
+
+## BCS/Bank Grammar Rules Found
+| Rule | Exam Frequency | Sample Question | Answer |
 |---|---|---|---|
 
-## Transformation Exercises (BCS/IELTS style)
-**Exercise 1 — Voice:**
-Original: [sentence from text]
-Transform to [Active/Passive]: ✅ [answer]
-বাংলা নিয়ম: [rule]
-
-**Exercise 2 — Degree:**
-Original: [sentence]
-Transform: ✅ [answer]
-
-**Exercise 3 — Conditional:**
-Original: [sentence]
-Transform: ✅ [answer]
-
-**Exercise 4 — Narration:**
-Original: [sentence]
-Transform to Indirect: ✅ [answer]
-
-**Exercise 5 — Simple ↔ Complex:**
-Original: [sentence]
-Transform: ✅ [answer]
+## Transformation Exercises
+**Ex 1 — Voice:** Original: [...] → ✅ | বাংলা নিয়ম: [...]
+**Ex 2 — Degree:** → ✅
+**Ex 3 — Conditional:** → ✅
+**Ex 4 — Narration:** → ✅
+**Ex 5 — Simple ↔ Complex:** → ✅
 """
 
 
@@ -531,14 +703,12 @@ TEXT: \"\"\"{text}\"\"\"
 | Expression | Type | বাংলা | English | Register | Better Alternatives |
 |---|---|---|---|---|---|
 
-## Deep Analysis — Top 5 Collocations
-For each:
+## Top 5 — Deep Analysis
 **[collocation]**
 - বাংলা: [meaning]
-- Why it collocates: [English explanation]
-- Wrong version students write: ❌ [common mistake]
-- Correct: ✅ [collocation]
-- {pub_style} example: > [sentence]
+- Why it collocates: [English]
+- ❌ Students write: [...] → ✅ Correct: [...]
+- Example: > [{pub_style} sentence]
 
 ## Idioms & Fixed Expressions
 | Expression | বাংলা | English | Origin | Exam |
@@ -548,15 +718,14 @@ For each:
 | Verb | বাংলা | Formal Equivalent | Example | Exam |
 |---|---|---|---|---|
 
-## Transition & Cohesion Map
-| Transition Used | Category | বাংলা | Level | Better Options |
+## Transition Map
+| Transition | Category | বাংলা | Level | Better Options |
 |---|---|---|---|---|
 
-**Reference Chains:**
-[What does each pronoun/reference word in the text refer to?]
-- "it" (line X) → refers to: [...]
-- "they" (line X) → refers to: [...]
-- "this" (line X) → refers to: [...]
+## Reference Chains
+- "it" → refers to: [...]
+- "they" → refers to: [...]
+- "this" → refers to: [...]
 """
 
 
@@ -567,54 +736,43 @@ TEXT: \"\"\"{text}\"\"\"
 
 # ✍️ WRITING FORMULA LABORATORY
 
-Extract 6 reusable writing patterns from this text:
-
----
-
 ### Formula 1: [Pattern Name]
-**Template:**
-```
-[SUBJECT] + [VERB], [CONCESSIVE/CONDITIONAL], [MAIN ASSERTION].
-```
+**Template:** `[SUBJECT] + [VERB], [CONCESSIVE], [ASSERTION].`
 **From text:** *"[exact sentence]"*
-**New example:** [fresh sentence on different topic]
-**কখন ব্যবহার (Bengali):** [when to use this]
-**When to use (English):** [guidance]
-**IELTS/BCS Bonus:** [how this pattern lifts your score]
+**New example:** [fresh topic]
+**কখন ব্যবহার:** [Bengali] | **When:** [English]
+**IELTS/BCS Bonus:** [score impact]
 
----
-
-### Formula 2: [Pattern Name]
+### Formula 2: [Name]
 [Same structure]
 
-### Formula 3: [Pattern Name]
+### Formula 3: [Name]
 [Same]
 
-### Formula 4: [Pattern Name]
+### Formula 4: [Name]
 [Same]
 
-### Formula 5: [Pattern Name]
+### Formula 5: [Name]
 [Same]
 
-### Formula 6: [Pattern Name]
+### Formula 6: [Name]
 [Same]
 
 ---
 
 ## Writing Drills
 
-**Drill 1:** Use Formula 1 to write about: [related current topic]
-Must use these 3 words from the text: [word1], [word2], [word3]
+**Drill 1:** Use Formula 2. Topic: [related current issue]
+Words to use: [word1], [word2], [word3]
 
-**Drill 2 — Paraphrase Challenge:**
+**Drill 2 — Paraphrase:**
 Most complex sentence → 3 versions:
 - Simpler:
 - More formal:
-- Different structure, same meaning:
+- Different structure:
 
-**Drill 3 — Paragraph Build ({pub_style} tone):**
-Write 5-6 sentences on [related topic]
-Requirements: 4 vocab words + 1 transition + 1 formula
+**Drill 3 — Paragraph ({pub_style}):**
+5-6 sentences: 4 vocab + 1 transition + 1 formula
 """
 
 
@@ -625,8 +783,8 @@ TEXT: \"\"\"{text}\"\"\"
 
 # 🏆 COMPETITIVE EXAM INTELLIGENCE
 
-## BCS Previous Questions (Real — from this text's words/concepts)
-| Word / Concept | BCS | Year | Exact Question | Options | Answer | Explanation |
+## BCS Previous Questions (Real)
+| Word/Concept | BCS | Year | Question | Options | Answer | Explanation |
 |---|---|---|---|---|---|---|
 
 ## High Frequency Word Alert
@@ -634,37 +792,38 @@ TEXT: \"\"\"{text}\"\"\"
 |---|---|---|---|---|
 
 ## Predicted BCS MCQs (5)
-**Q1.** [question from vocabulary/grammar in this text]
-A) &nbsp;&nbsp; B) &nbsp;&nbsp; C) &nbsp;&nbsp; D)
-✅ **Answer:** [X] — [Bengali + English explanation]
+
+**Q1.** [question]
+A) &nbsp; B) &nbsp; C) &nbsp; D)
+✅ **[X]** — [Bengali + English explanation]
 
 **Q2.** [question]
-A) B) C) D)
-✅ **Answer:** [X] — [explanation]
+A) &nbsp; B) &nbsp; C) &nbsp; D)
+✅ **[X]** — [explanation]
 
 **Q3.** [question]
-A) B) C) D)
-✅ **Answer:** [X] — [explanation]
+A) &nbsp; B) &nbsp; C) &nbsp; D)
+✅ **[X]** — [explanation]
 
 **Q4.** [question]
-A) B) C) D)
-✅ **Answer:** [X] — [explanation]
+A) &nbsp; B) &nbsp; C) &nbsp; D)
+✅ **[X]** — [explanation]
 
 **Q5.** [question]
-A) B) C) D)
-✅ **Answer:** [X] — [explanation]
+A) &nbsp; B) &nbsp; C) &nbsp; D)
+✅ **[X]** — [explanation]
 
-## Bank Recruitment Style (3)
-[Questions + full answers]
+## Bank Recruitment (3)
+[Q + options + answer + explanation]
 
-## IELTS / GRE Vocabulary Style (3)
-[Questions + answers]
+## IELTS / GRE (3)
+[Q + answer]
 
-## BCS Written / Viva (3 questions)
-[Open questions + model answers — Bengali + English]
+## BCS Written / Viva (3)
+[Open Q + model answers — Bengali + English]
 
-## GK Facts from This Text for Exams
-| Fact | Appeared In | Year | Question Format |
+## GK Facts for Exams
+| Fact | Appeared In | Year | Format |
 |---|---|---|---|
 """
 
@@ -677,33 +836,30 @@ TEXT: \"\"\"{text}\"\"\"
 # ❌ BENGALI SPEAKER MISTAKE RADAR
 
 ## Error Table
-| ❌ What Bangladeshis Write | ✅ Correct Form | Error Type | Rule (English) | বাংলা ব্যাখ্যা | Fix |
+| ❌ What Bangladeshis Write | ✅ Correct | Error Type | Rule | বাংলা ব্যাখ্যা | Fix |
 |---|---|---|---|---|---|
-[6-8 specific errors a Bengali speaker makes with THIS type of text]
 
 ## Top 3 Mother Tongue Interference Errors
-*(The deepest, most stubborn Bengali→English transfer problems)*
 
-### MTI Error 1: [Name of the interference pattern]
-**Why it happens:** [How Bengali grammar causes this English error]
-বাংলা: [explanation]
-❌ Example: [wrong]
-✅ Correct: [right]
-**The Rule:** [clear English grammar rule]
-**Remember with:** [memory trick]
+### MTI Error 1: [Name]
+**Why it happens:** [How Bengali causes this]
+**বাংলা:** [explanation]
+❌ [wrong] → ✅ [correct]
+**Rule:** [clear English rule]
+**Trick:** [memory trick]
 
 ### MTI Error 2: [Name]
-[Same structure]
+[Same]
 
 ### MTI Error 3: [Name]
-[Same structure]
+[Same]
 
 ## Punctuation Traps
-| ❌ Common Error | ✅ Correct | Rule |
+| ❌ | ✅ | Rule |
 |---|---|---|
 
 ## Register Errors
-[When students use informal words where formal ones are needed — specific to this text's topic]
+[Informal where formal needed — specific to this text]
 """
 
 
@@ -714,39 +870,37 @@ TEXT: \"\"\"{text}\"\"\"
 
 # 📸 RAPID REVISION CARD + POWER LINES
 
-## ⭐ Power Lines
-*(The 4-5 most important sentences — worth memorizing)*
+## ⭐ Power Lines (4-5 most important)
 
-| Line (exact) | কেন গুরুত্বপূর্ণ (Bengali) | Why It Matters (English) | Reuse In |
+| Line (exact) | কেন গুরুত্বপূর্ণ | Why It Matters | Reuse In |
 |---|---|---|---|
 
 ## Core Message
-**EN:** [The real argument in 2 sentences]
+**EN:** [The real argument — 2 sentences]
 **বাংলা:** [Same]
 
 ## Revision Card
-```
 ╔══════════════════════════════════════════════════════╗
-║  📌 TOPIC: [one line]                                ║
+║ 📌 TOPIC: [one line] ║
 ╠══════════════════════════════════════════════════════╣
-║  🔑 TOP 5 WORDS:                                     ║
-║   1. [word] = [Bengali] | Root: [root]               ║
-║   2. [word] = [Bengali] | Root: [root]               ║
-║   3. [word] = [Bengali] | Root: [root]               ║
-║   4. [word] = [Bengali] | Root: [root]               ║
-║   5. [word] = [Bengali] | Root: [root]               ║
+║ 🔑 TOP 5 WORDS: ║
+║ 1. [word] = [Bengali] | Root: [root] ║
+║ 2. [word] = [Bengali] | Root: [root] ║
+║ 3. [word] = [Bengali] | Root: [root] ║
+║ 4. [word] = [Bengali] | Root: [root] ║
+║ 5. [word] = [Bengali] | Root: [root] ║
 ╠══════════════════════════════════════════════════════╣
-║  🏛️ GRAMMAR RULE: [one key rule]                     ║
-║  📅 HISTORY FACT: [event + year]                     ║
-║  🇧🇩 BD LINK: [specific Bangladesh fact]             ║
-║  🏆 BCS LINK: [exam + year + question]               ║
-║  ✍️ FORMULA: [one reusable template]                 ║
+║ 🏛️ GRAMMAR RULE: [one key rule] ║
+║ 📅 HISTORY FACT: [event + year] ║
+║ 🇧🇩 BD LINK: [specific Bangladesh fact] ║
+║ 🏆 BCS LINK: [exam + year + question] ║
+║ ✍️ FORMULA: [one reusable template] ║
 ╚══════════════════════════════════════════════════════╝
-```
+
+text
+
 
 ## 5-Minute Study Plan
-If you only have 5 minutes before the exam, read this:
-[Compact, dense, exam-focused summary — Bengali + English]
 1. [Most important vocabulary fact]
 2. [Most important grammar point]
 3. [Most important historical fact]
@@ -755,9 +909,6 @@ If you only have 5 minutes before the exam, read this:
 """
 
 
-# ══════════════════════════════════════════
-#  SECTION → PROMPT MAPPING
-# ══════════════════════════════════════════
 SECTION_PROMPTS = {
     "sentences":    prompt_sentences,
     "vocabulary":   prompt_vocabulary,
@@ -772,39 +923,94 @@ SECTION_PROMPTS = {
 
 
 # ══════════════════════════════════════════
-#  MAIN ANALYSIS ENGINE
-#  Generates all sections sequentially
-#  with live progress updates
+#  INPUT SECTION
 # ══════════════════════════════════════════
-def run_full_analysis(text):
-    """Generate all sections one by one, storing results as they complete."""
-    st.session_state.results = {}
-    st.session_state.analysis_done = False
-    st.session_state.current_text = text
-    st.session_state.generating = True
+st.markdown("## 📥 Input")
 
-    for section in SECTIONS:
-        ck = f"{section}_{hash(text)}"
-        prompt_fn = SECTION_PROMPTS[section]
-        result = call_ai(prompt_fn(text), cache_key=ck)
-        st.session_state.results[section] = result if result else "❌ Generation failed."
-
-    st.session_state.analysis_done = True
-    st.session_state.generating = False
-
-
-# ══════════════════════════════════════════
-#  INPUT AREA — TOP OF PAGE
-# ══════════════════════════════════════════
-st.markdown("### 📋 Paste Your Article")
-article_text = st.text_area(
-    "",
-    height=200,
-    key="main_article",
-    placeholder="Paste any English newspaper article, editorial, legal text, or academic passage here..."
+input_mode = st.radio(
+    "", ["📋 Paste Text", "🔗 URL / Link"],
+    horizontal=True, key="input_mode_radio"
 )
 
-col1, col2, col3 = st.columns([2, 2, 6])
+article_text = ""
+
+# ── URL MODE ──
+if input_mode == "🔗 URL / Link":
+    st.markdown(
+        '<div class="strip-blue">🔗 যেকোনো news website-এর link দিন — article automatically extract হবে</div>',
+        unsafe_allow_html=True
+    )
+
+    url_input = st.text_input(
+        "", placeholder="https://www.thedailystar.net/... or https://www.bbc.com/...",
+        key="url_input"
+    )
+
+    if st.button("🌐 Fetch Article", type="primary", key="fetch_btn"):
+        if url_input.strip():
+            with st.spinner("🌐 Article fetch করা হচ্ছে..."):
+                title, source, text, error = extract_article_from_url(url_input.strip())
+
+            if error:
+                st.error(error)
+                st.markdown(
+                    '<div class="strip-amber">💡 Fetch না হলে: manually copy → Paste Text mode</div>',
+                    unsafe_allow_html=True
+                )
+            else:
+                st.session_state.current_text = text
+                st.session_state.fetched_title = title
+                st.session_state.fetched_source = source
+                st.session_state.analysis_done = False
+                st.session_state.results = {}
+                st.success("✅ Article fetched!")
+                st.rerun()
+
+    if st.session_state.current_text and st.session_state.fetched_source:
+        st.markdown(
+            f'<span class="source-badge">🌐 {st.session_state.fetched_source}</span>',
+            unsafe_allow_html=True
+        )
+        with st.expander("📄 Fetched Article Preview", expanded=True):
+            if st.session_state.fetched_title:
+                st.markdown(f"### {st.session_state.fetched_title}")
+            st.markdown(
+                f'<div class="article-preview">{st.session_state.current_text}</div>',
+                unsafe_allow_html=True
+            )
+            st.caption(f"📊 {len(st.session_state.current_text.split())} words")
+
+        with st.expander("✏️ Edit Extracted Text", expanded=False):
+            edited = st.text_area(
+                "Edit if needed:",
+                value=st.session_state.current_text,
+                height=300, key="url_edit"
+            )
+            if st.button("💾 Use Edited Version", key="use_edited"):
+                st.session_state.current_text = edited
+                st.session_state.results = {}
+                st.session_state.analysis_done = False
+                st.success("✅ Updated!")
+
+    article_text = st.session_state.current_text
+
+# ── PASTE MODE ──
+else:
+    article_text = st.text_area(
+        "", height=220, key="paste_text",
+        placeholder="Paste any English newspaper article, editorial, legal text, or academic passage here..."
+    )
+    if article_text.strip():
+        st.session_state.current_text = article_text.strip()
+        st.session_state.fetched_title = ""
+        st.session_state.fetched_source = ""
+
+# ══════════════════════════════════════════
+#  ANALYZE BUTTON
+# ══════════════════════════════════════════
+st.divider()
+
+col1, col2 = st.columns([2, 8])
 with col1:
     analyze_btn = st.button(
         "🚀 Analyze All Sections",
@@ -819,81 +1025,79 @@ with col2:
             st.session_state.analysis_done = False
             st.rerun()
 
-# ── Trigger analysis ──
 if analyze_btn:
-    if not article_text.strip():
-        st.warning("⚠️ Please paste an article first.")
+    text_to_analyze = st.session_state.current_text.strip()
+
+    if not text_to_analyze:
+        st.warning("⚠️ Article paste করুন অথবা URL fetch করুন।")
     elif not api_key:
         st.warning("⚠️ API Key দিন — sidebar-এ।")
+    elif (st.session_state.current_text == text_to_analyze
+          and st.session_state.analysis_done):
+        st.info("✅ Already analyzed! নিচে results দেখুন।")
     else:
-        # Check if same text already analyzed
-        if (st.session_state.current_text == article_text.strip()
-                and st.session_state.analysis_done):
-            st.info("✅ Already analyzed! Scroll down to see results.")
-        else:
-            # Progress display
-            st.markdown('<div class="progress-card">', unsafe_allow_html=True)
-            st.markdown("#### ⏳ Generating all sections...")
-            progress_bar = st.progress(0)
-            status_text = st.empty()
+        st.markdown('<div class="progress-card">', unsafe_allow_html=True)
+        st.markdown(f"#### ⏳ Generating {len(SECTIONS)} sections...")
+        progress_bar = st.progress(0)
+        status_text = st.empty()
 
-            results_temp = {}
-            text = article_text.strip()
-            st.session_state.results = {}
-            st.session_state.analysis_done = False
-            st.session_state.current_text = text
+        st.session_state.results = {}
+        st.session_state.analysis_done = False
 
-            for i, section in enumerate(SECTIONS):
-                label = SECTION_LABELS[section]
-                status_text.markdown(f"🔄 Generating **{label}**... ({i+1}/{len(SECTIONS)})")
-                progress_bar.progress((i) / len(SECTIONS))
+        for i, section in enumerate(SECTIONS):
+            label = SECTION_LABELS[section]
+            status_text.markdown(
+                f"🔄 **{label}** চলছে... ({i+1}/{len(SECTIONS)})"
+            )
+            progress_bar.progress(i / len(SECTIONS))
 
-                ck = f"{section}_{hash(text)}"
-                prompt_fn = SECTION_PROMPTS[section]
-                result = call_ai(prompt_fn(text), cache_key=ck)
-                st.session_state.results[section] = (
-                    result if result else "❌ Generation failed."
-                )
-                progress_bar.progress((i + 1) / len(SECTIONS))
+            ck = f"{section}_{hash(text_to_analyze)}"
+            result = call_ai(
+                SECTION_PROMPTS[section](text_to_analyze),
+                cache_key=ck
+            )
+            st.session_state.results[section] = result or "❌ Generation failed."
+            progress_bar.progress((i + 1) / len(SECTIONS))
 
-            status_text.markdown("✅ **All sections ready!** Scroll down to explore.")
-            st.session_state.analysis_done = True
-            st.markdown('</div>', unsafe_allow_html=True)
-            st.rerun()
+        status_text.markdown("✅ **সব sections ready!**")
+        st.session_state.analysis_done = True
+        st.markdown('</div>', unsafe_allow_html=True)
+        st.rerun()
 
 # ══════════════════════════════════════════
-#  RESULTS DISPLAY — TABS
+#  RESULTS
 # ══════════════════════════════════════════
 if st.session_state.analysis_done and st.session_state.results:
     st.divider()
-    st.markdown("### 📊 Analysis Results")
+
+    if st.session_state.fetched_title:
+        st.markdown(
+            f'<span class="source-badge">🌐 {st.session_state.fetched_source}</span>',
+            unsafe_allow_html=True
+        )
+        st.markdown(f"### 📰 {st.session_state.fetched_title}")
+
     st.markdown(
-        '<div class="strip-blue">✅ সব sections ready — যেকোনো tab-এ click করুন, result দেখুন।</div>',
+        '<div class="strip-green">✅ সব sections ready — tab-এ click করুন</div>',
         unsafe_allow_html=True
     )
 
-    # Build tab labels with status
     tab_labels = [SECTION_LABELS[s] for s in SECTIONS]
-
     tabs = st.tabs(tab_labels)
 
-    for i, (tab, section) in enumerate(zip(tabs, SECTIONS)):
+    for tab, section in zip(tabs, SECTIONS):
         with tab:
             result = st.session_state.results.get(section, "")
-            if result:
-                show_result(result, filename_prefix=section)
-            else:
-                st.info("⏳ Not generated yet.")
+            show_result(result, filename_prefix=section)
 
 elif not st.session_state.analysis_done:
     st.markdown("""
     <div style='text-align:center; padding:3rem; color:#999;'>
         <div style='font-size:3rem;'>📰</div>
         <p style='font-size:1.1rem; margin-top:1rem;'>
-            Paste an article above and click <strong>Analyze All Sections</strong>
+            Article paste করুন বা URL দিন → Analyze করুন
         </p>
-        <p style='font-size:0.9rem;'>
-            All 9 sections will be generated at once —
+        <p style='font-size:0.88rem;'>
             Sentences · Vocabulary · Context · Grammar ·
             Collocations · Formulas · Exam · Mistakes · Revision
         </p>
@@ -901,33 +1105,26 @@ elif not st.session_state.analysis_done:
     """, unsafe_allow_html=True)
 
 # ══════════════════════════════════════════
-#  EXTRA TOOLS — COLLAPSIBLE BOTTOM
+#  EXTRA TOOLS
 # ══════════════════════════════════════════
 st.divider()
 with st.expander("🛠️ Extra Tools", expanded=False):
     tool_tabs = st.tabs([
-        "🔀 Translate",
-        "📝 Error Fix",
-        "✍️ Writing Lab",
-        "🔄 Paraphrase",
-        "📰 Headlines",
-        "🧠 Vocab Quiz",
-        "⚖️ Compare",
-        "📓 Standalone Notes",
-        "📚 Word Bank",
+        "🔀 Translate", "📝 Error Fix", "✍️ Writing Lab",
+        "🔄 Paraphrase", "📰 Headlines", "🧠 Vocab Quiz",
+        "⚖️ Compare", "📓 Notes", "📚 Word Bank",
     ])
 
-    # ── Translate ──
     with tool_tabs[0]:
-        direction = st.radio("", ["Bengali → English", "English → Bengali"], horizontal=True, key="tr_dir")
+        direction = st.radio("", ["Bengali → English", "English → Bengali"],
+                             horizontal=True, key="tr_dir")
         t_text = st.text_area("", height=140, key="tr_text",
                               placeholder="Text to translate...")
         if st.button("🔀 Translate", type="primary", key="tr_btn"):
             if t_text.strip():
-                def _translation_prompt(txt, dir_):
-                    if dir_ == "Bengali → English":
-                        return f"""{build_system_header()}
-Bengali: \"\"\"{txt}\"\"\"
+                if direction == "Bengali → English":
+                    p = f"""{build_system_header()}
+Bengali: \"\"\"{t_text}\"\"\"
 ## Translation Lab
 ### 1. Literal Version
 [Direct] | বাংলা নোট: [how done]
@@ -936,37 +1133,36 @@ Bengali: \"\"\"{txt}\"\"\"
 ### 3. Step-by-Step
 | Step | Action | Result |
 |---|---|---|
-### 4. Three Alternatives (Easy→Advanced)
-1. Simple: 2. Standard: 3. Premium:
+| 1 | Core meaning | |
+| 2 | Structure | |
+| 3 | Vocabulary upgrade | |
+| 4 | Polish | |
+### 4. Three Alternatives
+1. Simple: 2. Standard: 3. {pub_style} Premium:
 ### 5. Bengali Speaker Traps
 | ❌ | ✅ | Why | Rule |
 |---|---|---|---|
 ### 6. Key Vocabulary
 | Word | বাংলা | Definition | Root | Exam |
 |---|---|---|---|---|"""
-                    else:
-                        return f"""{build_system_header()}
-English: \"\"\"{txt}\"\"\"
-## Translation Lab (EN→BN)
-### 1. Standard Bengali
-[Natural, fluent]
-### 2. Journalistic Bengali
-[Newspaper quality]
+                else:
+                    p = f"""{build_system_header()}
+English: \"\"\"{t_text}\"\"\"
+## Translation (EN→BN)
+### 1. Standard Bengali [Natural, fluent]
+### 2. Journalistic Bengali [Newspaper quality]
 ### 3. Word Breakdown
 | English | বাংলা | Note |
 |---|---|---|
-### 4. Structure Comparison
-[Diagram showing difference]
+### 4. Structure Comparison [diagram]
 ### 5. Exam Vocabulary
 | Word | বাংলা | Synonym | Antonym | BCS |
 |---|---|---|---|---|"""
-
                 with st.spinner("Translating..."):
-                    res = call_ai(_translation_prompt(t_text, direction))
+                    res = call_ai(p)
                 if res:
                     show_result(res, "translation")
 
-    # ── Error Fix ──
     with tool_tabs[1]:
         e_text = st.text_area("", height=180, key="err_text",
                               placeholder="Your English writing here...")
@@ -975,8 +1171,7 @@ English: \"\"\"{txt}\"\"\"
                 p = f"""{build_system_header()}
 Text: \"\"\"{e_text}\"\"\"
 ## Error Analysis
-### Score: [X/10]
-[Bengali + English assessment]
+### Score: [X/10] — [Bengali + English]
 ### Error Table
 | # | ❌ Original | ✅ Correct | Type | Rule | বাংলা |
 |---|---|---|---|---|---|
@@ -990,14 +1185,12 @@ Text: \"\"\"{e_text}\"\"\"
 | Style | | |
 | Coherence | | |
 ### Top 3 Patterns to Fix
-### BCS Connection
-"""
+### BCS Connection"""
                 with st.spinner("Analyzing..."):
                     res = call_ai(p)
                 if res:
                     show_result(res, "error_fix")
 
-    # ── Writing Lab ──
     with tool_tabs[2]:
         wl_prompts = [
             "Impact of AI on Bangladesh's job market (5-6 sentences)",
@@ -1016,56 +1209,43 @@ Text: \"\"\"{e_text}\"\"\"
                 p = f"""{build_system_header()}
 Student writing: \"\"\"{w_text}\"\"\"
 ## Writing Evaluation
-### Score: [X/10]
-[Bengali + English]
-### ✅ Strengths
-[Specific — cite actual lines]
-বাংলা: [...]
+### Score: [X/10] [Bengali + English]
+### ✅ Strengths [cite actual lines] | বাংলা: [...]
 ### ❌ Issues
 | Problem | Example | Fix | Rule |
 |---|---|---|---|
-### Professional Rewrite
-[Full {pub_style} version]
+### Professional Rewrite [{pub_style}]
 ### Vocabulary Upgrades
 | Used | Better | কেন ভালো |
 |---|---|---|
-### Priority Improvement (1-5)
-### Next Challenge
-"""
+### Priority Improvement (1→5)
+### Next Challenge"""
                 with st.spinner("Evaluating..."):
                     res = call_ai(p)
                 if res:
                     show_result(res, "writing_feedback")
 
-    # ── Paraphrase ──
     with tool_tabs[3]:
         p_text = st.text_area("", height=140, key="para_text",
-                              placeholder="Sentence or paragraph to paraphrase...")
+                              placeholder="Sentence or paragraph...")
         if st.button("🔄 Generate 4 Versions", type="primary", key="para_btn"):
             if p_text.strip():
                 p = f"""{build_system_header()}
 Original: \"\"\"{p_text}\"\"\"
 ## 4 Paraphrases
-### 1. Academic/IELTS
-[Rewrite] | Techniques: [...]
-### 2. {pub_style}
-[Rewrite] | Techniques: [...]
-### 3. Simple/Clear
-[Rewrite] | Techniques: [...]
-### 4. GRE-level Sophisticated
-[Rewrite] | Techniques: [...]
+### 1. Academic/IELTS [Rewrite] | Techniques: [...]
+### 2. {pub_style} [Rewrite] | Techniques: [...]
+### 3. Simple/Clear [Rewrite] | Techniques: [...]
+### 4. GRE Sophisticated [Rewrite] | Techniques: [...]
 ## Technique Table
 | Technique | Used In | Bengali | English |
 |---|---|---|---|
-## Practice
-Paraphrase these independently:
-1. [...] 2. [...]"""
+## Practice: 1.[...] 2.[...]"""
                 with st.spinner("Creating..."):
                     res = call_ai(p)
                 if res:
                     show_result(res, "paraphrase")
 
-    # ── Headlines ──
     with tool_tabs[4]:
         h_text = st.text_area("", height=120, key="hl_text",
                               placeholder="Topic or article summary...")
@@ -1074,26 +1254,19 @@ Paraphrase these independently:
                 p = f"""{build_system_header()}
 Topic: \"\"\"{h_text}\"\"\"
 ## 12 Headlines
-### Hard News (4)
-1. [...] → Technique: [Bengali + English]
-2. 3. 4.
-### Feature (3)
-1. 2. 3.
-### Opinion/Editorial (3)
-1. 2. 3.
-### Magazine/Digital (2)
-1. 2.
+### Hard News (4): 1.[→ Technique] 2. 3. 4.
+### Feature (3): 1. 2. 3.
+### Opinion/Editorial (3): 1. 2. 3.
+### Magazine (2): 1. 2.
 ## 5 Golden Rules
 | Rule | Bengali | Example |
 |---|---|---|
-## Practice Topics
-Write headlines for: 1. [...] 2. [...] 3. [...]"""
+## Practice: 1.[...] 2.[...] 3.[...]"""
                 with st.spinner("Crafting..."):
                     res = call_ai(p)
                 if res:
                     show_result(res, "headlines")
 
-    # ── Vocab Quiz ──
     with tool_tabs[5]:
         q_words = st.text_input("", key="quiz_words",
                                 placeholder="Words: resilience, curtailment, insolvency...")
@@ -1102,23 +1275,19 @@ Write headlines for: 1. [...] 2. [...] 3. [...]"""
                 p = f"""{build_system_header()}
 Words: {q_words}
 ## Vocabulary Quiz
-### A — Fill in Blanks (5)
-[{pub_style}-style sentences + 4 options]
-### B — Synonym Challenge (5)
-### C — Root Word Analysis (5)
+### A — Fill in Blanks (5) [{pub_style} sentences + 4 options]
+### B — Synonym (5)
+### C — Root Word (5)
 | Word | Root | Meaning | Family |
 |---|---|---|---|
 ### D — BCS/Bank MCQ (5)
-[Exact competitive format]
 ### E — Use in Sentence (3)
-### ✅ Answer Key
-[All answers with Bengali + English explanations]"""
+### ✅ Answer Key [Bengali + English]"""
                 with st.spinner("Building..."):
                     res = call_ai(p)
                 if res:
                     show_result(res, "vocab_quiz")
 
-    # ── Compare ──
     with tool_tabs[6]:
         cc1, cc2 = st.columns(2)
         with cc1:
@@ -1136,49 +1305,37 @@ Text 2: \"\"\"{cmp2}\"\"\"
 ### Side-by-Side
 | Feature | Text 1 | Text 2 |
 |---|---|---|
-| Avg sentence length | | |
+| Avg length | | |
 | Complexity | | |
 | Voice | | |
-| Vocabulary level | | |
+| Vocabulary | | |
 | Tone | | |
-### Vocabulary Battle
 ### Strengths & Gaps
 | | T1 ✅ | T1 ❌ | T2 ✅ | T2 ❌ |
 |---|---|---|---|---|
 ### Verdict
 | Category | Winner | T1/10 | T2/10 |
 |---|---|---|---|
-### Learning Points
-"""
+### Learning Points"""
                 with st.spinner("Comparing..."):
                     res = call_ai(p)
                 if res:
                     show_result(res, "compare")
 
-    # ── Standalone Notes ──
     with tool_tabs[7]:
-        st.caption("Independent note-making (separate from main analysis)")
         n_text = st.text_area("", height=200, key="note_text",
-                              placeholder="Paste any text for standalone notes...")
+                              placeholder="Paste text for standalone notes...")
         if st.button("📓 Generate Notes", type="primary", key="note_btn"):
             if n_text.strip():
                 p = f"""{build_system_header()}
 TEXT: \"\"\"{n_text}\"\"\"
 # MASTER STUDY NOTES
-## 1. Concept Map
-Central Theme: EN + বাংলা
-Key Arguments: 3 points EN + বাংলা each
-## 2. The Event in Context
-[Narrative — Bengali paragraph + English paragraph]
-Famous Related Events (3): Story format for each
-Bangladesh Angle: [specific facts]
-## 3. Vocabulary (12+ words)
-[Deep-dive format — same as main analysis]
-## 4. Exam Focus
-High frequency table + 5 predicted MCQs
+## 1. Concept Map [Central Theme EN + বাংলা | 3 Key Arguments]
+## 2. Context [Narrative EN + Bengali | 3 Famous Events story-format | BD Angle]
+## 3. Vocabulary (12+) [Deep-dive format]
+## 4. Exam Focus [High frequency table + 5 predicted MCQs]
 ## 5. Writing Formulas (5)
-## 6. Revision Card
-[Screenshot-ready card]"""
+## 6. Revision Card [Screenshot-ready]"""
                 ck = f"notes_{hash(n_text)}"
                 with st.spinner("Building notes..."):
                     res = call_ai(p, cache_key=ck)
@@ -1197,14 +1354,14 @@ High frequency table + 5 predicted MCQs
                 with st.expander(f"📝 {note['time']} — {note['preview']}"):
                     st.markdown(note['content'])
 
-    # ── Word Bank ──
     with tool_tabs[8]:
         with st.form("wb_form"):
             wc1, wc2, wc3 = st.columns([2, 3, 1])
             with wc1:
                 nw = st.text_input("Word", placeholder="resilience")
             with wc2:
-                nm = st.text_input("Meaning", placeholder="স্থিতিস্থাপকতা | capacity to recover")
+                nm = st.text_input("Meaning",
+                                   placeholder="স্থিতিস্থাপকতা | capacity to recover")
             with wc3:
                 st.write("")
                 st.write("")
@@ -1223,14 +1380,18 @@ High frequency table + 5 predicted MCQs
             wc1, wc2, wc3 = st.columns(3)
             wc1.metric("Total", len(st.session_state.saved_vocab))
             today = datetime.now().strftime("%Y-%m-%d")
-            wc2.metric("Today", sum(1 for w in st.session_state.saved_vocab if w["added"] == today))
+            wc2.metric("Today", sum(
+                1 for w in st.session_state.saved_vocab if w["added"] == today
+            ))
             wc3.metric("For Quiz", len(st.session_state.saved_vocab))
 
             wb_search = st.text_input("🔍 Search", key="wb_search")
-            filtered = [w for w in st.session_state.saved_vocab
-                        if not wb_search
-                        or wb_search.lower() in w["word"].lower()
-                        or wb_search.lower() in w["meaning"].lower()]
+            filtered = [
+                w for w in st.session_state.saved_vocab
+                if not wb_search
+                or wb_search.lower() in w["word"].lower()
+                or wb_search.lower() in w["meaning"].lower()
+            ]
 
             for item in filtered:
                 wc1, wc2, wc3, wc4 = st.columns([2, 4, 1, 1])
@@ -1246,17 +1407,25 @@ High frequency table + 5 predicted MCQs
             qc1, qc2 = st.columns(2)
             with qc1:
                 if len(st.session_state.saved_vocab) >= 3:
-                    if st.button("🧠 Quiz Me!", type="primary", use_container_width=True, key="wb_quiz"):
-                        wstr = ", ".join(w["word"] for w in st.session_state.saved_vocab[-15:])
+                    if st.button("🧠 Quiz Me!", type="primary",
+                                 use_container_width=True, key="wb_quiz"):
+                        wstr = ", ".join(
+                            w["word"] for w in st.session_state.saved_vocab[-15:]
+                        )
                         with st.spinner("Building quiz..."):
-                            res = call_ai(f"{build_system_header()}\nWords: {wstr}\n[Full quiz — BCS MCQ + synonyms + fill blanks + root analysis]")
+                            res = call_ai(
+                                f"{build_system_header()}\nWords: {wstr}\n"
+                                "Full quiz: BCS MCQ + synonyms + fill blanks + root analysis"
+                            )
                         if res:
                             show_result(res, "wb_quiz")
             with qc2:
                 export = "# Word Bank\n\n| Word | Meaning | Added |\n|---|---|---|\n"
                 for w in st.session_state.saved_vocab:
                     export += f"| {w['word']} | {w['meaning']} | {w['added']} |\n"
-                st.download_button("📥 Export", export, "word_bank.md", use_container_width=True)
+                st.download_button(
+                    "📥 Export", export, "word_bank.md", use_container_width=True
+                )
 
 # ── Footer ──
 st.markdown(
