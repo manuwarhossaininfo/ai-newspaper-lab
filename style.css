@@ -1,0 +1,366 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;500;600&display=swap');
+
+html, body, .stApp {
+    background-color: #ffffff;
+    color: #111111;
+}
+
+* {
+    font-family: 'Inter', sans-serif;
+    color: #111111;
+}
+
+.block-container {
+    padding: 2rem 3rem;
+    max-width: 1200px;
+    background: #ffffff;
+}
+
+section[data-testid="stSidebar"] {
+    background: #1a1a2e !important;
+}
+section[data-testid="stSidebar"] label,
+section[data-testid="stSidebar"] p,
+section[data-testid="stSidebar"] span,
+section[data-testid="stSidebar"] div {
+    color: white !important;
+    -webkit-text-fill-color: white !important;
+}
+section[data-testid="stSidebar"] .stSelectbox > div > div {
+    background: #16213e !important;
+    border: 1px solid #0f3460 !important;
+    color: white !important;
+}
+section[data-testid="stSidebar"] input {
+    background: #16213e !important;
+    border: 1px solid #0f3460 !important;
+    color: white !important;
+    -webkit-text-fill-color: white !important;
+}
+section[data-testid="stSidebar"] .stButton > button {
+    background: #0f3460 !important;
+    color: white !important;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', serif;
+    color: #111111 !important;
+    -webkit-text-fill-color: #111111 !important;
+}
+
+.stTabs [data-baseweb="tab-list"] {
+    background: #f3f4f6;
+    border-radius: 10px;
+    padding: 4px;
+    gap: 2px;
+}
+.stTabs [data-baseweb="tab"] {
+    border-radius: 8px;
+    padding: 8px 18px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #444444 !important;
+    -webkit-text-fill-color: #444444 !important;
+}
+.stTabs [aria-selected="true"] {
+    background: #1a1a2e !important;
+    color: white !important;
+    -webkit-text-fill-color: white !important;
+}
+
+.stButton > button[kind="primary"] {
+    background: #1a1a2e !important;
+    color: white !important;
+    -webkit-text-fill-color: white !important;
+    border: none !important;
+    border-radius: 8px;
+    padding: 10px 28px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+.stButton > button[kind="primary"]:hover {
+    background: #0f3460 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+.stButton > button:not([kind="primary"]) {
+    background: #ffffff !important;
+    color: #111111 !important;
+    -webkit-text-fill-color: #111111 !important;
+    border: 1.5px solid #d1d5db !important;
+    border-radius: 8px;
+}
+
+div[data-baseweb="textarea"] textarea {
+    background: #ffffff !important;
+    color: #111111 !important;
+    -webkit-text-fill-color: #111111 !important;
+    border: 1.5px solid #d1d5db !important;
+    border-radius: 10px !important;
+    font-size: 0.95rem !important;
+    line-height: 1.7 !important;
+    caret-color: #111111 !important;
+    padding: 12px 14px !important;
+}
+div[data-baseweb="textarea"] textarea:focus {
+    border-color: #1a1a2e !important;
+    box-shadow: 0 0 0 2px rgba(26,26,46,0.08) !important;
+}
+div[data-baseweb="textarea"] textarea::placeholder {
+    color: #9ca3af !important;
+    -webkit-text-fill-color: #9ca3af !important;
+}
+
+div[data-baseweb="input"] input {
+    background: #ffffff !important;
+    color: #111111 !important;
+    -webkit-text-fill-color: #111111 !important;
+    border: 1.5px solid #d1d5db !important;
+    border-radius: 8px !important;
+    font-size: 0.95rem !important;
+    caret-color: #111111 !important;
+    padding: 10px 14px !important;
+}
+div[data-baseweb="input"] input:focus {
+    border-color: #1a1a2e !important;
+    box-shadow: 0 0 0 2px rgba(26,26,46,0.08) !important;
+}
+div[data-baseweb="input"] input::placeholder {
+    color: #9ca3af !important;
+    -webkit-text-fill-color: #9ca3af !important;
+}
+
+.stMarkdown,
+.stMarkdown p,
+.stMarkdown li,
+.stMarkdown span {
+    color: #111111 !important;
+    -webkit-text-fill-color: #111111 !important;
+    line-height: 1.9;
+    font-size: 0.97rem;
+}
+.stMarkdown h1 {
+    color: #111111 !important;
+    -webkit-text-fill-color: #111111 !important;
+    font-size: 1.8rem;
+    margin-top: 1.5rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 3px solid #111111;
+}
+.stMarkdown h2 {
+    color: #111111 !important;
+    -webkit-text-fill-color: #111111 !important;
+    font-size: 1.4rem;
+    margin-top: 1.4rem;
+    padding-bottom: 0.3rem;
+    border-bottom: 2px solid #e5e7eb;
+}
+.stMarkdown h3 {
+    color: #111111 !important;
+    -webkit-text-fill-color: #111111 !important;
+    font-size: 1.1rem;
+    margin-top: 1.2rem;
+}
+.stMarkdown h4 {
+    color: #111111 !important;
+    -webkit-text-fill-color: #111111 !important;
+    margin-top: 1rem;
+}
+.stMarkdown strong {
+    color: #111111 !important;
+    -webkit-text-fill-color: #111111 !important;
+    font-weight: 700;
+}
+
+.stMarkdown table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    margin: 1.2rem 0;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+}
+.stMarkdown th {
+    background: #1a1a2e !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    padding: 11px 16px !important;
+    text-align: left !important;
+    font-weight: 600 !important;
+    font-size: 0.88rem !important;
+}
+.stMarkdown td {
+    background: #ffffff !important;
+    color: #111111 !important;
+    -webkit-text-fill-color: #111111 !important;
+    padding: 10px 16px !important;
+    border-bottom: 1px solid #f0f0f0 !important;
+    vertical-align: top;
+}
+.stMarkdown tr:nth-child(even) td {
+    background: #f9fafb !important;
+}
+.stMarkdown tr:hover td {
+    background: #f0f4ff !important;
+}
+
+.stMarkdown blockquote {
+    border-left: 4px solid #1a1a2e;
+    padding: 10px 18px;
+    background: #f9fafb;
+    border-radius: 0 8px 8px 0;
+    margin: 1rem 0;
+}
+.stMarkdown blockquote p {
+    color: #111111 !important;
+    -webkit-text-fill-color: #111111 !important;
+    margin: 0;
+    font-style: italic;
+}
+
+.stMarkdown code {
+    background: #f3f4f6 !important;
+    color: #111111 !important;
+    -webkit-text-fill-color: #111111 !important;
+    padding: 2px 7px;
+    border-radius: 5px;
+    font-size: 0.87rem;
+    border: 1px solid #e5e7eb;
+}
+.stMarkdown pre {
+    background: #f9fafb !important;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 1.2rem 1.5rem;
+    overflow-x: auto;
+    margin: 1rem 0;
+}
+.stMarkdown pre code {
+    background: transparent !important;
+    color: #111111 !important;
+    -webkit-text-fill-color: #111111 !important;
+    border: none !important;
+    padding: 0 !important;
+    font-size: 0.88rem;
+    line-height: 1.8;
+}
+
+.strip-blue {
+    background: #eff6ff;
+    border-left: 4px solid #2563eb;
+    padding: 10px 16px;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    color: #1e3a8a !important;
+}
+.strip-green {
+    background: #f0fdf4;
+    border-left: 4px solid #16a34a;
+    padding: 10px 16px;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    color: #14532d !important;
+}
+.strip-amber {
+    background: #fffbeb;
+    border-left: 4px solid #f59e0b;
+    padding: 10px 16px;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    color: #78350f !important;
+}
+.progress-card {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 12px;
+    padding: 1.2rem 1.5rem;
+    margin: 1rem 0;
+}
+.article-preview {
+    background: #ffffff;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1.5rem 2rem;
+    margin: 1rem 0;
+    max-height: 400px;
+    overflow-y: auto;
+    line-height: 1.8;
+    font-size: 0.95rem;
+    color: #111111 !important;
+}
+.source-badge {
+    display: inline-block;
+    background: #1a1a2e;
+    color: white !important;
+    -webkit-text-fill-color: white !important;
+    padding: 3px 14px;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    margin-bottom: 0.8rem;
+}
+
+div[data-testid="metric-container"] {
+    background: #1a1a2e;
+    border-radius: 10px;
+    padding: 12px;
+}
+div[data-testid="metric-container"] label {
+    color: #94a3b8 !important;
+    -webkit-text-fill-color: #94a3b8 !important;
+}
+div[data-testid="metric-container"] div {
+    color: white !important;
+    -webkit-text-fill-color: white !important;
+}
+
+.stDownloadButton > button {
+    background: #ffffff !important;
+    border: 1.5px solid #1a1a2e !important;
+    color: #1a1a2e !important;
+    -webkit-text-fill-color: #1a1a2e !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+}
+.stDownloadButton > button:hover {
+    background: #1a1a2e !important;
+    color: white !important;
+    -webkit-text-fill-color: white !important;
+}
+
+div[data-testid="stExpander"] {
+    border: 1px solid #e5e7eb !important;
+    border-radius: 10px !important;
+    background: #ffffff !important;
+}
+div[data-testid="stExpander"] summary {
+    color: #111111 !important;
+    -webkit-text-fill-color: #111111 !important;
+    font-weight: 600 !important;
+}
+
+.stRadio label,
+.stCheckbox label {
+    color: #111111 !important;
+    -webkit-text-fill-color: #111111 !important;
+}
+
+.stCaption, small {
+    color: #6b7280 !important;
+    -webkit-text-fill-color: #6b7280 !important;
+}
+
+div[data-testid="stAlert"] p {
+    color: #111111 !important;
+    -webkit-text-fill-color: #111111 !important;
+}
+
+hr {
+    border: none !important;
+    border-top: 1.5px solid #e5e7eb !important;
+    margin: 1.5rem 0 !important;
+}
